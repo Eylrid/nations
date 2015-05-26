@@ -88,7 +88,7 @@ class ConsoleAsker:
 
 
 def demo():
-    nationlist = load_list()[:4]
+    nationlist = load_list()
     asker = ConsoleAsker(nationlist)
     asker.quiz()
     raw_input('Press enter to quit')
