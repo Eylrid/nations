@@ -69,16 +69,7 @@ class NationTracker:
 
         nation = self.nationlist[self.index]
 
-        othernations = self.nationlist[:]
-        othernations.remove(nation)
-        random.shuffle(othernations)
-
-        def sort_key(nation2):
-            right = self.pairscores[nation][nation2][0]
-            wrong = self.pairscores[nation][nation2][1]
-            return float(right)/float(wrong)
-
-        othernations.sort(key=sort_key)
+        othernations = self.pairs_by_scores(nation)
         choices = othernations[:3]
         choices.append(nation)
         random.shuffle(choices)
@@ -101,6 +92,24 @@ class NationTracker:
     def score(self, nation):
         right, wrong = self.nationscores[nation]
         return float(right)/float(wrong)
+
+    def nations_by_scores(self):
+        nationlist = self.nationlist[:]
+        nationlist.sort(key = self.score)
+        return nationlist
+
+    def pairs_by_scores(self, nation):
+        othernations = self.pairscores[nation].keys()[:]
+        random.shuffle(othernations)
+
+        def sort_key(nation2):
+            right = self.pairscores[nation][nation2][0]
+            wrong = self.pairscores[nation][nation2][1]
+            return float(right)/float(wrong)
+
+        othernations.sort(key=sort_key)
+        return othernations
+
 
 class Quizer:
     def __init__(self, nationtracker, tries=3, practice=True):
