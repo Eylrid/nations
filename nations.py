@@ -28,9 +28,11 @@ class NationTracker:
         self.version = NationTracker.LATESTVERSION
         self.start()
 
-    def create_dictionary(self):
+    def create_dictionaries(self):
+        self.nationscores = {}
         self.pairscores = {}
         for nation1 in self.nationlist:
+            self.nationscores[nation1] = 1
             self.pairscores[nation1] = {}
             for nation2 in self.nationlist:
                 if nation1 == nation2: continue
