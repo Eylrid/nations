@@ -21,9 +21,11 @@ def save_tracker(nationtracker, trackerlocation=TRACKERLOCATION):
         pickle.dump(nationtracker, file)
 
 class NationTracker:
+    LATESTVERSION = 1
     def __init__(self, nationlist):
         self.nationlist = nationlist[:]
         self.create_dictionary()
+        self.version = NationTracker.LATESTVERSION
         self.start()
 
     def create_dictionary(self):
@@ -36,6 +38,11 @@ class NationTracker:
 
     def start(self):
         self.index = 0
+        self.check_version()
+
+    def check_version(self):
+        if not hasattr(self, 'version'):
+            self.version = 1
 
     def next(self):
         if self.index == len(self.nationlist):
