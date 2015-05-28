@@ -21,7 +21,7 @@ def save_tracker(nationtracker, trackerlocation=TRACKERLOCATION):
         pickle.dump(nationtracker, file)
 
 class NationTracker:
-    LATESTVERSION = 2
+    LATESTVERSION = 3
     def __init__(self, nationlist):
         self.nationlist = nationlist[:]
         self.create_pairscores()
@@ -49,6 +49,18 @@ class NationTracker:
             del self.dictionary
             self.version = 2
 
+        if self.version == 2:
+            self.nationscores = {}
+            for nation in self.nationlist:
+                right = 1
+                wrong = 1
+                for r, w in self.pairscores[nation].values():
+                    right += r-1
+                    wrong += w-1
+                self.nationscores[nation] = [right, wrong]
+
+            self.version = 3
+
     def next(self):
         if self.index == len(self.nationlist):
             raise StopIteration
@@ -75,11 +87,18 @@ class NationTracker:
         if answer != correct:
             #incorrect answer, mark wrong
             self.pairscores[correct][answer][1] += 1
+            self.nationscores[correct][1] += 1
+        else:
+            self.nationscores[correct][0] += 1
 
         for option in options:
             if option != correct and option != answer:
                 #incorrect option that wasn't choosen, mark right
                 self.pairscores[correct][option][0] += 1
+
+    def score(self, nation):
+        right, wrong = self.nationscores[nation]
+        return float(right)/float(wrong)
 
 class Quizer:
     def __init__(self, nationtracker, tries=3, practice=True):

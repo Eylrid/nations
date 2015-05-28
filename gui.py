@@ -51,7 +51,12 @@ class Asker(Tkinter.Frame):
             self.end()
             return
 
-        self.prompt_label['text'] = self.prompt
+        if self.quizer.nationtracker.score(self.prompt) < 2:
+            prompttext = self.prompt
+        else:
+            prompttext = ''
+
+        self.prompt_label['text'] = prompttext
 
         for i in range(4):
             option = self.options[i]
