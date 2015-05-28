@@ -1,36 +1,91 @@
-import random, time
+import random, time, os, pickle
 LISTLOCATION = 'nation_list'
+TRACKERLOCATION = 'nationtracker.pkl'
 
 def load_list(listlocation = LISTLOCATION):
     with open(listlocation, 'r') as file:
         return [n for n in file.read().split('\n') if n]
 
-def question_generator(nationlist):
-    for nation in nationlist:
-        othernations = nationlist[:]
+def load_tracker(trackerlocation=TRACKERLOCATION):
+    if os.path.exists(trackerlocation):
+        with open(trackerlocation, 'r') as file:
+            nationtracker = pickle.load(file)
+            nationtracker.start()
+            return nationtracker
+    else:
+        nationlist = load_list()
+        return NationTracker(nationlist)
+
+def save_tracker(nationtracker, trackerlocation=TRACKERLOCATION):
+    with open(trackerlocation, 'w') as file:
+        pickle.dump(nationtracker, file)
+
+class NationTracker:
+    def __init__(self, nationlist):
+        self.nationlist = nationlist[:]
+        self.create_dictionary()
+        self.start()
+
+    def create_dictionary(self):
+        self.dictionary = {}
+        for nation1 in self.nationlist:
+            self.dictionary[nation1] = {}
+            for nation2 in self.nationlist:
+                if nation1 == nation2: continue
+                self.dictionary[nation1][nation2] = [1,1]
+
+    def start(self):
+        self.index = 0
+
+    def next(self):
+        if self.index == len(self.nationlist):
+            raise StopIteration
+
+        nation = self.nationlist[self.index]
+
+        othernations = self.nationlist[:]
         othernations.remove(nation)
-        choices = random.sample(othernations, 3)
+        random.shuffle(othernations)
+
+        def sort_key(nation2):
+            right = self.dictionary[nation][nation2][0]
+            wrong = self.dictionary[nation][nation2][1]
+            return float(right)/float(wrong)
+
+        othernations.sort(key=sort_key)
+        choices = othernations[:3]
         choices.append(nation)
         random.shuffle(choices)
-        yield nation, choices
+        self.index += 1
+        return nation, choices
+
+    def mark(self, correct, answer, options):
+        if answer != correct:
+            #incorrect answer, mark wrong
+            self.dictionary[correct][answer][1] += 1
+
+        for option in options:
+            if option != correct and option != answer:
+                #incorrect option that wasn't choosen, mark right
+                self.dictionary[correct][option][0] += 1
 
 class Quizer:
-    def __init__(self, nationlist, tries=3, practice=True):
-        self.nationlist = nationlist
+    def __init__(self, nationtracker, tries=3, practice=True):
+        self.nationtracker = nationtracker
         self.tries = tries
         self.practice = practice
         self.score = 0
-        self.questions = question_generator(nationlist)
 
     def start(self):
         self.starttime = time.time()
 
     def next(self):
         self.attempts = 0
-        self.correctanswer, self.choices = self.questions.next()
+        self.correctanswer, self.choices = self.nationtracker.next()
         return self.correctanswer, self.choices
 
     def answer(self, answer):
+        self.nationtracker.mark(self.correctanswer, answer, self.choices)
         if answer == self.correctanswer:
             self.score += self.tries - self.attempts
             return 'correct'
@@ -41,7 +96,8 @@ class Quizer:
             return 'try_again'
 
     def end(self):
-        possible_score = len(self.nationlist)*self.tries
+        save_tracker(self.nationtracker)
+        possible_score = len(self.nationtracker.nationlist)*self.tries
         timetaken = time.time() - self.starttime
         pointspersecond = self.score/timetaken
         return self.score, possible_score, timetaken, pointspersecond
@@ -88,9 +144,10 @@ class ConsoleAsker:
 
 
 def demo():
-    nationlist = load_list()
-    asker = ConsoleAsker(nationlist)
+    nationtracker = load_tracker()
+    asker = ConsoleAsker(nationtracker)
     asker.quiz()
+    save_tracker(nationtracker)
     raw_input('Press enter to quit')
 
 if __name__ == '__main__':

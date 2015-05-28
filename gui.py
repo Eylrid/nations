@@ -90,8 +90,8 @@ Points per Second: %f
 
 def main():
     rt = Tkinter.Tk()
-    nationlist = nations.load_list()
-    asker = Asker(rt, nationlist)
+    nationtracker = nations.load_tracker()
+    asker = Asker(rt, nationtracker)
     asker.grid()
     asker.mainloop()
 
