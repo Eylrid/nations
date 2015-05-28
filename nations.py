@@ -21,20 +21,20 @@ def save_tracker(nationtracker, trackerlocation=TRACKERLOCATION):
         pickle.dump(nationtracker, file)
 
 class NationTracker:
-    LATESTVERSION = 1
+    LATESTVERSION = 2
     def __init__(self, nationlist):
         self.nationlist = nationlist[:]
-        self.create_dictionary()
+        self.create_pairscores()
         self.version = NationTracker.LATESTVERSION
         self.start()
 
     def create_dictionary(self):
-        self.dictionary = {}
+        self.pairscores = {}
         for nation1 in self.nationlist:
-            self.dictionary[nation1] = {}
+            self.pairscores[nation1] = {}
             for nation2 in self.nationlist:
                 if nation1 == nation2: continue
-                self.dictionary[nation1][nation2] = [1,1]
+                self.pairscores[nation1][nation2] = [1,1]
 
     def start(self):
         self.index = 0
@@ -43,6 +43,11 @@ class NationTracker:
     def check_version(self):
         if not hasattr(self, 'version'):
             self.version = 1
+
+        if self.version == 1:
+            self.pairscores = self.dictionary
+            del self.dictionary
+            self.version = 2
 
     def next(self):
         if self.index == len(self.nationlist):
@@ -55,8 +60,8 @@ class NationTracker:
         random.shuffle(othernations)
 
         def sort_key(nation2):
-            right = self.dictionary[nation][nation2][0]
-            wrong = self.dictionary[nation][nation2][1]
+            right = self.pairscores[nation][nation2][0]
+            wrong = self.pairscores[nation][nation2][1]
             return float(right)/float(wrong)
 
         othernations.sort(key=sort_key)
@@ -69,12 +74,12 @@ class NationTracker:
     def mark(self, correct, answer, options):
         if answer != correct:
             #incorrect answer, mark wrong
-            self.dictionary[correct][answer][1] += 1
+            self.pairscores[correct][answer][1] += 1
 
         for option in options:
             if option != correct and option != answer:
                 #incorrect option that wasn't choosen, mark right
-                self.dictionary[correct][option][0] += 1
+                self.pairscores[correct][option][0] += 1
 
 class Quizer:
     def __init__(self, nationtracker, tries=3, practice=True):
