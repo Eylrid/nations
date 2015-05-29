@@ -15,6 +15,9 @@ class Asker(Tkinter.Frame):
         self.create_widgets()
         self.quizer.start()
         self.next()
+        self.paused = False
+        self.reset_remaining()
+        self.heartbeat()
 
     def create_widgets(self):
         self.prompt_label = Tkinter.Label(self, text='prompt')
@@ -44,6 +47,9 @@ class Asker(Tkinter.Frame):
 
         self.canvas.tag_bind('flag', '<Button-1>', self.click)
 
+        self.time_label = Tkinter.Label(self)
+        self.time_label.grid(row=2, column=0)
+
     def next(self):
         try:
             self.prompt, self.options = self.quizer.next()
@@ -68,20 +74,44 @@ class Asker(Tkinter.Frame):
             self.tkimages[i] = tkimage
             self.canvas.itemconfig(self.images[i], image=tkimage)
 
-    def click(self, event):
-        tags = self.canvas.gettags('current')
-        i = int(tags[1])
-        answer = self.options[i]
+    def reset_remaining(self):
+        self.remaining = 5
+        self.time_label['text'] = str(self.remaining)
+
+    def heartbeat(self):
+        if not self.paused:
+            self.remaining -= 1
+            self.time_label['text'] = str(self.remaining)
+            if self.remaining <= 0:
+                self.click()
+
+        self.after(1000, self.heartbeat)
+
+    def click(self, event=None):
+        self.reset_remaining()
+        if event:
+            tags = self.canvas.gettags('current')
+            i = int(tags[1])
+            answer = self.options[i]
+        else:
+            answer = ''
+
         result = self.quizer.answer(answer)
         if result == 'try_again':
-            tkMessageBox.showerror('Incorrect', 'Incorrect. Try Again.')
+            self.showerror('Incorrect', 'Incorrect. Try Again.')
         elif result == 'move_on':
-            tkMessageBox.showerror('Incorrect', 'Incorrect. Moving on.')
+            self.showerror('Incorrect', 'Incorrect. Moving on.')
             self.next()
         else:
             self.next()
 
+    def showerror(self, title, message):
+        self.paused = True
+        tkMessageBox.showerror(title, message)
+        self.paused = False
+
     def end(self):
+        self.paused = True
         score, possible_score, timetaken, pointspersecond = self.quizer.end()
         message = '''
 Score: %d

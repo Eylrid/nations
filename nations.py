@@ -79,15 +79,21 @@ class NationTracker:
     def mark(self, correct, answer, options):
         if answer != correct:
             #incorrect answer, mark wrong
-            self.pairscores[correct][answer][1] += 1
+            if answer:
+                self.pairscores[correct][answer][1] += 1
             self.nationscores[correct][1] += 1
         else:
             self.nationscores[correct][0] += 1
 
         for option in options:
             if option != correct and option != answer:
-                #incorrect option that wasn't choosen, mark right
-                self.pairscores[correct][option][0] += 1
+                if answer:
+                    #incorrect option that wasn't choosen, mark right
+                    self.pairscores[correct][option][0] += 1
+                else:
+                    #no answer given, option may have stalled answer
+                    #mark wrong
+                    self.pairscores[correct][option][1] += 1
 
     def score(self, nation):
         right, wrong = self.nationscores[nation]
